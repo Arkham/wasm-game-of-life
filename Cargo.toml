@@ -18,7 +18,8 @@ js-sys = "0.3"
 wasm-bindgen-test = "0.3.33"
 
 [profile.release]
-opt-level = "s"
+opt-level = "z"
+lto = true
 
 [dependencies.web-sys]
 version = "0.3"

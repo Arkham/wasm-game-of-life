@@ -33,8 +33,8 @@ impl Cell {
 
 #[wasm_bindgen]
 pub struct Universe {
-    width: u32,
-    height: u32,
+    width: i32,
+    height: i32,
     cells: Vec<Cell>,
 }
 
@@ -93,11 +93,11 @@ impl Universe {
         }
     }
 
-    pub fn width(&self) -> u32 {
+    pub fn width(&self) -> i32 {
         self.width
     }
 
-    pub fn height(&self) -> u32 {
+    pub fn height(&self) -> i32 {
         self.height
     }
 
@@ -105,26 +105,66 @@ impl Universe {
         self.cells.as_ptr()
     }
 
-    pub fn toggle_cell(&mut self, row: u32, col: u32) {
+    pub fn toggle_cell(&mut self, row: i32, col: i32) {
         let idx = self.get_index(row, col);
         self.cells[idx].toggle();
     }
 
-    fn get_index(&self, row: u32, col: u32) -> usize {
+    pub fn add_slider(&mut self, row: i32, col: i32) {
+        self.add_pattern(row, col, vec![(0, -1), (1, 0), (-1, 1), (0, 1), (1, 1)])
+    }
+
+    pub fn add_pulsar(&mut self, row: i32, col: i32) {
+        let pulsar_pattern = "  ###   ###
+
+#    # #    #
+#    # #    #
+#    # #    #
+  ###   ###
+
+  ###   ###
+#    # #    #
+#    # #    #
+#    # #    #
+
+  ###   ###";
+
+        let mut result = Vec::new();
+        for (y, line) in pulsar_pattern.lines().enumerate() {
+            for (x, value) in line.chars().enumerate() {
+                if value == '#' {
+                    result.push((y as i32 - 7, x as i32 - 6));
+                }
+            }
+        }
+
+        self.add_pattern(row, col, result);
+    }
+
+    fn add_pattern(&mut self, row: i32, col: i32, pattern: Vec<(i32, i32)>) {
+        for (d_row, d_col) in pattern.iter().copied() {
+            let pattern_row = (row + d_row).wrapping_rem_euclid(self.height);
+            let pattern_col = (col + d_col).wrapping_rem_euclid(self.width);
+            let idx = self.get_index(pattern_row, pattern_col);
+            self.cells[idx] = Cell::Alive;
+        }
+    }
+
+    fn get_index(&self, row: i32, col: i32) -> usize {
         (row * self.width + col) as usize
     }
 
-    fn live_neighbour_count(&self, row: u32, col: u32) -> u8 {
+    fn live_neighbour_count(&self, row: i32, col: i32) -> u8 {
         let mut count = 0;
 
-        for delta_row in [self.height - 1, 0, 1].iter().cloned() {
-            for delta_col in [self.width - 1, 0, 1].iter().cloned() {
+        for delta_row in [-1, 0, 1].iter().cloned() {
+            for delta_col in [-1, 0, 1].iter().cloned() {
                 if (delta_row, delta_col) == (0, 0) {
                     continue;
                 }
 
-                let neighbour_row = (row + delta_row) % self.height;
-                let neighbour_col = (col + delta_col) % self.width;
+                let neighbour_row = (row + delta_row).wrapping_rem_euclid(self.height);
+                let neighbour_col = (col + delta_col).wrapping_rem_euclid(self.width);
                 let idx = self.get_index(neighbour_row, neighbour_col);
                 count += self.cells[idx] as u8;
             }
