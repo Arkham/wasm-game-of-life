@@ -6,7 +6,7 @@ const GRID_COLOR = "#CCCCCC";
 const DEAD_COLOR = "#FFFFFF";
 const ALIVE_COLOR = "#000000";
 
-const universe = Universe.new();
+let universe = Universe.new();
 const width = universe.width();
 const height = universe.height();
 
@@ -60,6 +60,18 @@ const renderLoop = () => {
   animationId = requestAnimationFrame(renderLoop);
 };
 
+// new universe and random universe
+const newUniverse = document.getElementById("new-universe");
+newUniverse.addEventListener("click", event => {
+  universe = Universe.new();
+});
+
+const randomUniverse = document.getElementById("random-universe");
+randomUniverse.addEventListener("click", event => {
+  universe = Universe.random_new();
+});
+
+// draw grid and cells
 const drawGrid = () => {
   ctx.beginPath();
   ctx.strokeStyle = GRID_COLOR;
