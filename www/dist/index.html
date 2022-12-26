@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Game of Life</title>
+    <style>
+      html * {
+        font-family: monospace;
+      }
+
+      body {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      main {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      h1 {
+        margin: 0;
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .ticks-per-turn {
+        display: flex;
+        align-items: center;
+      }
+
+      #fps {
+        color: gray;
+      }
+
+      footer {
+        color: gray;
+      }
+
+    </style>
+  </head>
+  <body>
+    <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+    <main class="main">
+      <section class="header">
+        <h1>A WASM Game of Life</h1>
+        <div id="fps"></div>
+        <section class="controls">
+          <button id="new-universe">New</button>
+          <button id="random-universe">Rng</button>
+          <button id="play-pause"></button>
+          <div class="ticks-per-turn">
+            <input id="ticks-per-turn" type="range" min="1" max="10" value="5">
+            <label for="ticks-per-turn">5</label>
+          </div>
+        </section>
+      </section>
+
+      <canvas id="game-of-life-canvas"></canvas>
+
+      <footer>
+        <p>Click to add a dot, Cmd-click to add a glider, Shift-click to add a pulsar.</p>
+      </footer>
+    </main>
+    <script src="./bootstrap.js"></script>
+  </body>
+</html>
