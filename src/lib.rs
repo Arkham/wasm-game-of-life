@@ -6,13 +6,13 @@ use wasm_bindgen::prelude::*;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-extern crate web_sys;
+// extern crate web_sys;
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
-macro_rules! log {
-    ( $( $t:tt )* ) => {
-        web_sys::console::log_1(&format!( $( $t )* ).into());
-    }
-}
+// macro_rules! log {
+//     ( $( $t:tt )* ) => {
+//         web_sys::console::log_1(&format!( $( $t )* ).into());
+//     }
+// }
 
 #[wasm_bindgen]
 #[repr(u8)]
@@ -36,7 +36,10 @@ pub struct Universe {
     width: i32,
     height: i32,
     cells: Vec<Cell>,
+    ages: Vec<u8>,
 }
+
+const MAX_AGE: u8 = 31;
 
 impl Default for Universe {
     fn default() -> Self {
@@ -65,10 +68,13 @@ impl Universe {
             })
             .collect();
 
+        let ages = vec![MAX_AGE; (width * height) as usize];
+
         Universe {
             width,
             height,
             cells,
+            ages,
         }
     }
 
@@ -86,10 +92,13 @@ impl Universe {
             })
             .collect();
 
+        let ages = vec![MAX_AGE; (width * height) as usize];
+
         Universe {
             width,
             height,
             cells,
+            ages,
         }
     }
 
@@ -105,9 +114,16 @@ impl Universe {
         self.cells.as_ptr()
     }
 
+    pub fn ages(&self) -> *const u8 {
+        self.ages.as_ptr()
+    }
+
     pub fn toggle_cell(&mut self, row: i32, col: i32) {
         let idx = self.get_index(row, col);
         self.cells[idx].toggle();
+        if self.cells[idx] == Cell::Alive {
+            self.ages[idx] = MAX_AGE;
+        }
     }
 
     pub fn add_slider(&mut self, row: i32, col: i32) {
@@ -147,6 +163,7 @@ impl Universe {
             let pattern_col = (col + d_col).wrapping_rem_euclid(self.width);
             let idx = self.get_index(pattern_row, pattern_col);
             self.cells[idx] = Cell::Alive;
+            self.ages[idx] = MAX_AGE;
         }
     }
 
@@ -174,36 +191,31 @@ impl Universe {
     }
 
     pub fn tick(&mut self) {
-        let mut next = self.cells.clone();
+        let mut next_cells = self.cells.clone();
+        let mut next_ages = self.ages.clone();
 
         for row in 0..self.height {
             for col in 0..self.width {
                 let idx = self.get_index(row, col);
                 let cell = self.cells[idx];
+                let age = self.ages[idx];
                 let live_neighbours = self.live_neighbour_count(row, col);
-                // log!(
-                //     "cell[{},{}] is initially {:?} and has {} live neighbours",
-                //     row,
-                //     col,
-                //     cell,
-                //     live_neighbours
-                // );
 
-                let next_cell = match (cell, live_neighbours) {
-                    (Cell::Alive, 0..=1) => Cell::Dead,
-                    (Cell::Alive, 2..=3) => Cell::Alive,
-                    (Cell::Alive, 4..=8) => Cell::Dead,
-                    (Cell::Dead, 3) => Cell::Alive,
-                    _ => Cell::Dead,
+                let (next_cell, next_age) = match (cell, live_neighbours) {
+                    (Cell::Alive, 0..=1) => (Cell::Dead, 0),
+                    (Cell::Alive, 2..=3) => (Cell::Alive, if age > 0 { age - 1 } else { 0 }),
+                    (Cell::Alive, 4..=8) => (Cell::Dead, 0),
+                    (Cell::Dead, 3) => (Cell::Alive, MAX_AGE),
+                    _ => (Cell::Dead, 0),
                 };
 
-                // log!("    it becomes {:?}", next_cell);
-
-                next[idx] = next_cell;
+                next_cells[idx] = next_cell;
+                next_ages[idx] = next_age;
             }
         }
 
-        self.cells = next;
+        self.cells = next_cells;
+        self.ages = next_ages;
     }
 }
 

@@ -4,7 +4,16 @@ import { memory } from "wasm-game-of-life/wasm_game_of_life_bg";
 const CELL_SIZE = 5; // px
 const GRID_COLOR = "#CCCCCC";
 const DEAD_COLOR = "#FFFFFF";
-const ALIVE_COLOR = "#000000";
+const ALIVE_COLORS = [
+  "#e3eae0",
+  "#c8d5c2",
+  "#adc0a4",
+  "#92ab86",
+  "#779768",
+  "#5f7853",
+  "#475a3e",
+  "#2f3c29"
+];
 
 let universe = Universe.new();
 const width = universe.width();
@@ -72,11 +81,15 @@ const renderLoop = () => {
 const newUniverse = document.getElementById("new-universe");
 newUniverse.addEventListener("click", event => {
   universe = Universe.new();
+  drawGrid();
+  drawCells();
 });
 
 const randomUniverse = document.getElementById("random-universe");
 randomUniverse.addEventListener("click", event => {
   universe = Universe.random_new();
+  drawGrid();
+  drawCells();
 });
 
 // draw grid and cells
@@ -107,34 +120,18 @@ const drawCells = () => {
   const cellsPtr = universe.cells();
   const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
 
+  const agesPtr = universe.ages();
+  const ages = new Uint8Array(memory.buffer, agesPtr, width * height);
+
   ctx.beginPath();
 
-  // Alive cells.
-  ctx.fillStyle = ALIVE_COLOR;
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
       const idx = getIndex(row, col);
-      if (cells[idx] !== Cell.Alive) {
-        continue;
-      }
 
-      ctx.fillRect(
-        col * (CELL_SIZE + 1) + 1,
-        row * (CELL_SIZE + 1) + 1,
-        CELL_SIZE,
-        CELL_SIZE
-      );
-    }
-  }
-
-  // Dead cells.
-  ctx.fillStyle = DEAD_COLOR;
-  for (let row = 0; row < height; row++) {
-    for (let col = 0; col < width; col++) {
-      const idx = getIndex(row, col);
-      if (cells[idx] !== Cell.Dead) {
-        continue;
-      }
+      ctx.fillStyle = cells[idx] === Cell.Dead
+        ? DEAD_COLOR
+        : ALIVE_COLORS[ages[idx] % 8];
 
       ctx.fillRect(
         col * (CELL_SIZE + 1) + 1,
